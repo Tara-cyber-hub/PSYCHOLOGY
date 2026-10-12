@@ -453,5 +453,9 @@
   };
 
   /* 已在本会话登录过则直接进入面板 */
+     /* 自动每60秒从服务器拉一次新数据，开着研究者页面就能实时看到谁完成了 */
+  setInterval(function () {
+     if (sessionStorage.getItem('zhixu_admin') === '1') refreshRemote();
+  }, 60000);
   if (sessionStorage.getItem('zhixu_admin') === '1') enterPanel();
 })();
