@@ -38,8 +38,9 @@ window.APP_CONFIG = {
      admin.html 点「从服务器刷新实时数据」即可实时查看每人每天是否完成，
      不必等结果码回收。若 worker 设置了 ADMIN_KEY 环境变量，
      把相同的值填到 reportAdminKey。不部署则整项留空，不影响其他功能。 */
-  "reportUrl": "",
-  "reportAdminKey": "",
+  "reportUrl": "https://gentle-field-f702.biantianyi-blcu.workers.dev",
+  "reportAdminKey": "zhixu2026",
+
 
   /* ── 实验分组 ──────────────────────────────────────────────
      assignment: "manual" = 被试进入页面后人工选择组别（当前使用）
