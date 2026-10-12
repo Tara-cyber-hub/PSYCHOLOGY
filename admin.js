@@ -11,6 +11,10 @@
   var $ = function (id) { return document.getElementById(id); };
   var KEY = 'zhixu_records_v1';
   var RKEY = 'zhixu_remote_v1';
+  var ETAG_KEY = 'zhixu_etags_v1';
+  var etags = {};
+  try { etags = JSON.parse(localStorage.getItem(ETAG_KEY) || '{}') || {}; } catch (e) { etags = {}; }
+  function saveEtags() { localStorage.setItem(ETAG_KEY, JSON.stringify(etags)); }
   var records = {};
   var remote = {};
   try { records = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { records = {}; }
@@ -78,6 +82,11 @@
       messages: (obj.messages && obj.messages.length) ? obj.messages : (old && old.messages) || null,
       importedAt: new Date().toISOString()
     };
+    var expInput = $('expName');
+    if (expInput && expInput.value.trim() && result.pid) {
+      etags[String(result.pid)] = expInput.value.trim();
+      saveEtags();
+    }
     return true;
   }
 
@@ -129,8 +138,8 @@
   function buildParticipants() {
     var map = {};
     listOfRecords().forEach(function (r) {
-      var res = r.result, pid = String(res.pid || '?');
-      var p = map[pid] || (map[pid] = { group: '', cond: '', firstDate: '', byDate: {}, remoteDays: null });
+      var res = r.result, pid = String(res.pid || '?')
+      var p = map[pid] || (map[pid] = { group: '', cond: '', firstDate: '', byDate: {}, remoteDays: null, exp: etags[pid] || '' });
       var date = recDate(res);
       if (date) {
         var d = p.byDate[date] || (p.byDate[date] = { crisis: 0, attFail: 0, turns: 0, n: 0 });
@@ -190,7 +199,7 @@
   }
 
   function matrixHead(total) {
-    var h = '<tr><th>手机号</th><th>组</th><th>条件</th><th>首次对话</th>';
+    var h = '<tr><th>主试</th><th>手机号</th><th>组</th><th>条件</th><th>首次对话</th>';
     for (var i = 1; i <= total; i++) h += '<th>D' + i + '</th>';
     h += '<th>已完成</th><th>今日</th><th>危机</th><th>注意力</th></tr>';
     return h;
@@ -199,7 +208,11 @@
   function renderMatrix(parts) {
     var total = totalDays();
     var today = todayStr();
-    var pids = Object.keys(parts).sort();
+    var pids = Object.keys(parts).sort(function (a, b) {
+      var ea = parts[a].exp || 'ZZZZ', eb = parts[b].exp || 'ZZZZ';
+      if (ea !== eb) return ea.localeCompare(eb, 'zh');
+      return a.localeCompare(b);
+    });
     $('mtxHead').innerHTML = matrixHead(total);
     if (!pids.length) {
       $('mtxBody').innerHTML = '<tr><td colspan="' + (8 + total) + '" class="empty">暂无被试数据：导入结果码或从服务器刷新实时数据后，这里会显示每名被试每天的完成情况</td></tr>';
@@ -235,7 +248,7 @@
         else todayCell = (p.byDate[today] || (p.remoteDays && p.remoteDays[today]))
           ? '<td class="okcell">已完成</td>' : '<td class="misscell">未完成</td>';
       }
-      return '<tr><td>' + esc(pid) + '</td>' +
+      return '<tr><td>' + esc(p.exp || '—') + '</td><td>' + esc(pid) + '</td>' +
         '<td>' + (p.group ? '第' + esc(p.group) + '组' : '—') + '</td>' +
         '<td>' + esc(condLabel(p.cond)) + '</td>' +
         '<td>' + esc(p.firstDate || '—') + '</td>' +
