@@ -271,10 +271,7 @@
       fetch(String(C.reportUrl).replace(/\/+$/, '') + '/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pid: result.pid, group: result.group, cond: result.cond, day: result.day, date: result.date,
-          turns: result.turns, crisis: result.crisis, att_pass: result.att_pass, sid: result.sid, ts: result.ended
-        })
+        body: JSON.stringify(result)
       }).catch(function () { });
     } catch (e) { }
   }
