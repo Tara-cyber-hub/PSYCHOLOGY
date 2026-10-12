@@ -297,7 +297,11 @@
       var added = 0;
       all.forEach(function (rec) {
         if (addRecord(rec)) added++;
+        if (rec.pid && rec._exp) {
+          etags[String(rec.pid)] = rec._exp;
+        }
       });
+      saveEtags();
       save();
       $('remoteMsg').textContent = '已从服务器拉取 ' + all.length + ' 条记录（新增/更新 ' + added + ' 条） · ' + new Date().toLocaleTimeString();
       render();
