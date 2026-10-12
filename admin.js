@@ -276,31 +276,22 @@
     var base = String(C.reportUrl || '').replace(/\/+$/, '');
     if (!base) return;
     $('remoteMsg').textContent = '正在从服务器拉取…';
-    var all = [], offset = 0, total = 1;
     try {
-      do {
-        var headers = { 'Content-Type': 'application/json' };
-        if (C.reportAdminKey) headers['X-Admin-Key'] = C.reportAdminKey;
-        var r = await fetch(base + '/reports?offset=' + offset + '&limit=40', { headers: headers });
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        var d = await r.json();
-        all = all.concat(d.records || []);
-        total = d.total || all.length;
-        offset += 40;
-      } while (offset < total);
-      remote = {};
+      var r = await fetch(base + '/admin/records?key=' + encodeURIComponent(C.reportAdminKey || ''));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var d = await r.json();
+      var all = d.records || [];
+      var added = 0;
       all.forEach(function (rec) {
-        if (!rec || !rec.pid) return;
-        remote[rec.pid] = { group: rec.group || '', cond: rec.cond || '', days: rec.days || {}, updated: rec.updated || '' };
+        if (addRecord(rec)) added++;
       });
-      saveRemote();
-      $('remoteMsg').textContent = '已刷新 ' + Object.keys(remote).length + ' 名被试的实时上报（' + new Date().toLocaleTimeString() + '）';
+      save();
+      $('remoteMsg').textContent = '已从服务器拉取 ' + all.length + ' 条记录（新增/更新 ' + added + ' 条） · ' + new Date().toLocaleTimeString();
       render();
     } catch (e) {
-      $('remoteMsg').textContent = '刷新失败：' + e.message + '（请确认 worker 已部署并绑定 KV REPORTS）';
+      $('remoteMsg').textContent = '刷新失败：' + e.message;
     }
   }
-
   /* ---------------- 对话查看 ---------------- */
   function showChat(sid) {
     var r = records[sid];
