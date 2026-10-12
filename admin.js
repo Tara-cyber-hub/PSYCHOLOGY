@@ -458,6 +458,29 @@
   $('btnJson').onclick = exportJSON;
   $('btnTxt').onclick = exportTXT;
   $('btnRefreshRemote').onclick = refreshRemote;
+  $('btnPushAll').onclick = async function () {
+    var base = String(C.reportUrl || '').replace(/\/+$/, '');
+    if (!base) return alert('未配置 reportUrl');
+    var recs = records;
+    var etagsLocal = etags;
+    var ok = 0, fail = 0;
+    $('remoteMsg').textContent = '正在推送 ' + Object.keys(recs).length + ' 条到服务器…';
+    for (const sid of Object.keys(recs)) {
+      const r = Object.assign({}, recs[sid].result);
+      if (r.pid) r._exp = etagsLocal[String(r.pid)] || '';
+      try {
+        await fetch(base + '/report', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(r)
+        });
+        ok++;
+      } catch (e) { fail++; }
+    }
+    $('remoteMsg').textContent = '推送完成：成功 ' + ok + ' 条，失败 ' + fail + ' 条 · ' + new Date().toLocaleTimeString();
+    refreshRemote();
+  };
+
 
   $('btnClear').onclick = function () {
     if (!Object.keys(records).length) return alert('当前没有数据');
